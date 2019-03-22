@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+$COLLECTOR1=$ARGV[0];
+$COLLECTOR2=$ARGV[1];
+$SNMP_STRING=$ARGV[2];
+$SRCINT_NUM1=$ARGV[3];
+$SRCINT_NUM2=$ARGV[4];
+$FLPORT1=$ARGV[5];
+$FLPORT2=$ARGV[6];
+$LANINTF=$ARGV[7];
+$WANINT=$ARGV[8];
+
+if (@ARGV) {
+} else {
+        print << "MAN";
+
+usage: $0 [flow collector1] [flow collector2] [SNMP string] [flow src1] [flow src2] [flow port1] [flow port2] [LAN Interface] [WAN interface]
+
+example: ./netflow9-generic 10.10.0.254 10.20.0.254 all0f1v9ipf1x lo10 lo20 9995 8995 vlan1 fa4
+
+MAN
+;
+exit(0);
+}
+
+print << "EOL";
+
+######### Netflow9 CPE Configuration ############
+conf t
+!
+ip access-list standard netflow9
+permit host $COLLECTOR1
+permit host $COLLECTOR2
+exit
+!
+snmp-server community $SNMP_STRING RO netflow9
+!
+flow exporter EXPORTER-1
+description Collector-1
+destination $COLLECTOR1
+source $SRCINT_NUM1
+transport udp $FLPORT1
+!
+flow exporter EXPORTER-2
+description Collector-2
+destination $COLLECTOR2
+source $SRCINT_NUM2
+transport udp $FLPORT2
+!
+!
+flow monitor FLOW-MONITOR-1
+description Combine Netflow multiple src/dst
+record netflow ipv4 original-input
+exporter EXPORTER-1
+exporter EXPORTER-2
+!
+interface $LANINTF
+ip flow monitor FLOW-MONITOR-1 input
+ip flow monitor FLOW-MONITOR-1 output
+!
+interface $WANINT
+ip flow monitor FLOW-MONITOR-1 input
+ip flow monitor FLOW-MONITOR-1 output
+!
+end
+!
+Verification
+sh flow exporter
+sh flow monitor
+sh flow interfaces
+
+EOL
+;
