@@ -1,0 +1,38 @@
+#### - ADD NEW TRUSTPOINT - ####
+crypto pki trustpoint <Trustpoint-name-CA>
+ enrollment retry count 100
+ enrollment retry period 5
+ enrollment url http://xxx.xxxx.gov:80/enx/scep/87
+ serial-number none
+ ip-address <local IPsec endpoint IP>
+ subject-name O=<company-name>,OU=<City-Town>,CN=00XXXXXXXX
+ crl query ldap://<ldap-server-ip>
+ revocation-check crl none
+ source interface <local IPsec endpoint>
+ rsakeypair <Trustpoint-name-CA RSA Key>
+
+#### - GENERATE RSA KEYS - ####
+crypto key generate rsa general-keys label <Trustpoint-name-CA> modulus 2048
+! crypto key generate rsa general-keys label only-for-ssh modulus 2048
+! ip ssh rsa keypair-name only-for-ssh
+#### - AUTHENTICATE - ####
+crypto ca authenticate <Trustpoint-name-CA>
+! (crypto ca authenticate ENX-CA-EE1)
+#### - ENROLL CERTIFICATE/REQUEST IT - ####
+crypto ca enroll <Trustpoint-name-CA>
+! (crypto ca enroll ENX-CA-EE1)
+#### - VERIFICATION - ####
+show crypto pki certificate <Trustpoint-name-CA> verbose
+!
+show crypto pki trustpoint <Trustpoint-name-CA> status
+
+# - REMOVE CERTIFICATE - #
+#### - DELETE ENROLLMENT - ####
+no crypto pki enroll <Trustpoint-name-CA>
+!
+#### - ZEROIZE KEY - ####
+crypto key zeroize rsa <Trustpoint-name-CA>
+!
+#### - DELETE TRUSTPOINT - ####
+no crypto pki trustpoint <Trustpoint-name-CA>
+!
